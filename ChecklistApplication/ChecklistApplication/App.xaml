@@ -1,0 +1,9 @@
+﻿<Application x:Class="ChecklistApplication.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:view="clr-namespace:ChecklistApplication.Views"
+             StartupUri="Views/Checklist.xaml">
+    <Application.Resources>
+         
+    </Application.Resources>
+</Application>

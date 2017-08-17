@@ -1,0 +1,206 @@
+﻿<Window x:Class="ChecklistApplication.Views.Checklist"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:ChecklistApplication"
+        xmlns:sys="clr-namespace:System;assembly=mscorlib"
+        xmlns:vm="clr-namespace:ChecklistApplication.ViewModels"
+        xmlns:converters="clr-namespace:ChecklistApplication.Converters"
+        xmlns:prism="http://prismlibrary.com/"
+        prism:ViewModelLocator.AutoWireViewModel="True"
+        d:DataContext="{d:DesignInstance Type=vm:ChecklistViewModel, IsDesignTimeCreatable=True}"
+        mc:Ignorable="d"
+        Title="Checklist" MinHeight="400" MinWidth="500" Height="400" Width="500"
+        FontFamily="/ChecklistApplication;component/Fonts/#Century">
+    <Window.InputBindings>
+        <KeyBinding Gesture="CTRL+N" Command="{Binding NewCommand, Mode=OneTime}"/>
+        <KeyBinding Gesture="CTRL+O" Command="{Binding OpenCommand, Mode=OneTime}"/>
+        <KeyBinding Gesture="CTRL+S" Command="{Binding SaveCommand, Mode=OneTime}"/>
+        <KeyBinding Gesture="CTRL+SHIFT+S" Command="{Binding SaveAsCommand, Mode=OneTime}"/>
+        <KeyBinding Gesture="CTRL+SHIFT+C" Command="{Binding CloseCommand, Mode=OneTime}"/>
+        <KeyBinding Gesture="CTRL+I" Command="{Binding AddCommand, Mode=OneTime}"/>
+        <KeyBinding Gesture="CTRL+D" Command="{Binding DeleteCommand, Mode=OneTime}"/>
+    </Window.InputBindings>
+    <Window.Resources>
+        <!-- Constants -->
+        <sys:String x:Key="DefaultFileString">No file's opened</sys:String>
+        
+        <!-- Converters -->
+        <converters:StateToBoolean x:Key="StateToBooleanConverter"/>
+        <converters:StateToColor x:Key="StateToColorConverter"/>
+        <converters:OpenedFileConverter x:Key="OpenedFileConverter"/>
+        <converters:IsAsyncWorkToAppState x:Key="AppStateConverter"/>
+
+        <!-- Brushes -->
+        <LinearGradientBrush x:Key="dgHeaderBrush" StartPoint="0.5,0" EndPoint="0.5,1">
+            <GradientStop Color="#FF6B8E95" Offset="0"/>
+            <GradientStop Color="#FF14A7C1" Offset="1"/>
+            <GradientStop Color="#FF1E424E" Offset="0.509"/>
+            <GradientStop Color="#FF1D4855" Offset="0.542"/>
+            <GradientStop Color="#FF1D4855" Offset="0.542"/>
+            <GradientStop Color="#FF193A44" Offset="0.526"/>
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="dgHeaderBorderBrush" StartPoint="0.5,0" EndPoint="0.5,1">
+            <GradientStop Color="#FF1D1D1D" Offset="0.614"/>
+            <GradientStop Color="#FF007F96" Offset="0.853"/>
+            <GradientStop Color="#FF0AEAFA" Offset="1"/>
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="dgRowBrush" EndPoint="0.5,1" StartPoint="0.5,0">
+            <GradientStop Color="#FFBBBBBB" Offset="1"/>
+            <GradientStop Color="White" Offset="0"/>
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="dgSelectedRowBrush" EndPoint="0.5,1" MappingMode="RelativeToBoundingBox" StartPoint="0.5,0">
+            <GradientStop Color="#FF00B8FD" Offset="0"/>
+            <GradientStop Color="#FF0049A0" Offset="1"/>
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="dgInProgressRowBrush" EndPoint="0.5,1" MappingMode="RelativeToBoundingBox" StartPoint="0.5,0">
+            <GradientStop Color="#FF45FD00" Offset="0"/>
+            <GradientStop Color="#FF056600" Offset="1"/>
+        </LinearGradientBrush>
+
+        <!-- Styles -->
+        <Style x:Key="dgHeaderStyle" TargetType="DataGridColumnHeader">
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="{StaticResource dgHeaderBrush}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="{StaticResource dgHeaderBorderBrush}"/>
+            <Setter Property="Height" Value="25"/>
+            <Setter Property="FontFamily" Value="/ChecklistApplication;component/Fonts/#Adobe Caslon Pro Bold"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style x:Key="dgRowStyle" TargetType="DataGridRow">
+            <Setter Property="Background" Value="{StaticResource dgRowBrush}"/>
+            <Setter Property="Height" Value="30"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding State}" Value="InProgress">
+                    <Setter Property="Background" Value="{StaticResource dgInProgressRowBrush}"/>
+                </DataTrigger>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="{StaticResource dgSelectedRowBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="dgCellStyle" TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
+            <Setter Property="Width" Value="Auto"/>
+            <Style.Triggers>
+                <Trigger Property="IsSelected" Value="True">
+                    <Setter Property="Background" Value="Transparent" />
+                    <Setter Property="BorderBrush" Value="Transparent" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="dgIdCellElementStyle">
+            <Setter Property="FrameworkElement.HorizontalAlignment" Value="Center"/>
+            <Setter Property="FrameworkElement.VerticalAlignment" Value="Center"/>
+            <Setter Property="TextBlock.TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+
+        <Style x:Key="dgDescriptionCellStyle">
+            <Setter Property="FrameworkElement.VerticalAlignment" Value="Center"/>
+            <Setter Property="TextBlock.TextTrimming" Value="CharacterEllipsis"/>
+        </Style>
+
+        <Style x:Key="dgCheckboxElementStyle" TargetType="CheckBox">
+            <Setter Property="IsEnabled" Value="False"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="dgStateCellStyle" TargetType="{x:Type ComboBox}">
+            <Setter Property="IsSynchronizedWithCurrentItem" Value="False"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style x:Key="VisibilityStyle" TargetType="{x:Type FrameworkElement}">
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsAsyncExecuting, Mode=OneWay}" Value="False">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <DockPanel>
+        <Menu DockPanel.Dock="Top" Height="Auto">
+            <MenuItem Header="File">
+                <MenuItem Header="New" Command="{Binding NewCommand, Mode=OneTime}" InputGestureText="Ctrl+N"/>
+                <MenuItem Header="Open" Command="{Binding OpenCommand, Mode=OneTime}" InputGestureText="Ctrl+O"/>
+                <Separator/>
+                <MenuItem Header="Save" Command="{Binding SaveCommand, Mode=OneTime}" InputGestureText="Ctrl+S"/>
+                <MenuItem Header="Save As" Command="{Binding SaveAsCommand, Mode=OneTime}" InputGestureText="Ctrl+Shift+S"/>
+                <Separator/>
+                <MenuItem Header="Close" Command="{Binding CloseCommand, Mode=OneTime}" InputGestureText="Ctrl+Shift+C"/>
+            </MenuItem>
+            <MenuItem Header="Edit">
+                <MenuItem Header="Add" Command="{Binding AddCommand, Mode=OneTime}" InputGestureText="Ctrl+I"/>
+                <MenuItem Header="Remove" Command="{Binding DeleteCommand, Mode=OneTime}" InputGestureText="Ctrl+D"/>
+            </MenuItem>
+        </Menu>
+        <Grid DockPanel.Dock="Top" Height="Auto"  Margin="0, 0, 0, 0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Filter" Margin="10" Foreground="Blue" FontSize="14"/>
+            <TextBox x:Name="textbox" Grid.Column="1" Margin="10" Text="{Binding Filter, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+        </Grid>
+        <StatusBar DockPanel.Dock="Bottom" Height="Auto">
+            <StatusBar.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                    </Grid>
+                </ItemsPanelTemplate>
+            </StatusBar.ItemsPanel>
+            <StatusBarItem Grid.Column="0">
+                <TextBlock Text="{Binding IsAsyncExecuting, Mode=OneWay, Converter={StaticResource AppStateConverter}}"/>
+            </StatusBarItem>
+            <Separator Grid.Column="1"/>
+            <StatusBarItem Grid.Column="2">
+                <TextBlock TextTrimming="CharacterEllipsis" ToolTip="{Binding CurrentFile, Mode=OneWay}"
+                           Text="{Binding CurrentFile, Mode=OneWay, Converter={StaticResource OpenedFileConverter}, ConverterParameter={StaticResource DefaultFileString}}"/>
+            </StatusBarItem>
+            <Separator Grid.Column="3" Style="{StaticResource VisibilityStyle}"/>
+            <StatusBarItem Grid.Column="4" Width="100" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Style="{StaticResource VisibilityStyle}">
+                <ProgressBar Minimum="0" Maximum="100" Value="{Binding Progress, Mode=OneWay}"/>
+            </StatusBarItem>
+        </StatusBar>
+        <DataGrid x:Name="datagrid" Margin="10,0,10,0" AutoGenerateColumns="False" 
+                  SelectionMode="Single" CanUserAddRows="False" Background="#FFCFCFCF"
+                  ItemsSource="{Binding Checklist}" RowStyle="{StaticResource dgRowStyle}"
+                  CellStyle="{StaticResource dgCellStyle}" ColumnHeaderStyle="{StaticResource dgHeaderStyle}"
+                  CanUserResizeColumns="True" CanUserResizeRows="False">
+            <DataGrid.BorderBrush>
+                <SolidColorBrush Color="#FF0066CC"/>
+            </DataGrid.BorderBrush>
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="ID" Binding="{Binding ID}" Width="Auto" 
+                                    ElementStyle="{StaticResource dgIdCellElementStyle}" MaxWidth="80"
+                                    EditingElementStyle="{StaticResource dgIdCellElementStyle}"/>
+                <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*"
+                                    ElementStyle="{StaticResource dgDescriptionCellStyle}"
+                                    EditingElementStyle="{StaticResource dgDescriptionCellStyle}"/>
+                <DataGridComboBoxColumn x:Name="state" Header="State" ItemsSource="{Binding Source={x:Static vm:RowViewModel.States}}" 
+                                        TextBinding="{Binding State, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                        MinWidth="90" MaxWidth="120" ElementStyle="{StaticResource dgStateCellStyle}"
+                                        EditingElementStyle="{StaticResource dgStateCellStyle}"/>
+                <DataGridCheckBoxColumn Header="C" Width="Auto" Binding="{Binding State, Converter={StaticResource StateToBooleanConverter}, Mode=OneWay}"
+                                        MaxWidth="20" ElementStyle="{StaticResource dgCheckboxElementStyle}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </DockPanel>
+</Window>
